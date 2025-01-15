@@ -2,6 +2,7 @@
 import pygame
 import time
 import random
+import os
 
 snake_speed = 15
 action = False
@@ -27,12 +28,43 @@ game_window = pygame.display.set_mode((window_x, window_y))
 fps = pygame.time.Clock()
 
 # displaying Score function
-def show_score(choice, color, font, size):
+def show_score(choice, color, font, size, game_size_x):
     score_font = pygame.font.SysFont(font, size)
     score_surface = score_font.render('Score : ' + str(score), True, color)
     score_rect = score_surface.get_rect()
+    score_rect.topright = ( game_size_x - 10, 10)
     game_window.blit(score_surface, score_rect)
 
+# displaying an info message
+def show_message(choice, color, font, size):
+    message_font = pygame.font.SysFont(font, size)
+    message_surface = message_font.render('Press Space to Puse', True, color)
+    message_rect = message_surface.get_rect()
+    game_window.blit(message_surface, message_rect)
+
+# save score
+def save_score(score):
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_directory, 'Top_scorse.txt')
+    # Read the existing scores from the file
+    try:
+        with open(file_path, 'r') as file:
+            scores = file.readlines()
+    except FileNotFoundError:
+        # If the file does not exist, initialize an empty list
+        scores = []
+    # Convert the scores to integers and add the new score
+    if len(scores) < 5 or int(scores[-1]) < score:
+        scores = [int(s) for s in scores[:4]]
+        scores.append(score)
+    # Sort the scores in descending order
+        scores.sort(reverse=True)
+    else:
+        return 
+    # Write the sorted scores back to the file
+    with open(file_path, 'w') as file:
+        for s in scores:
+            file.write(f"{s}\n")
 # Reset game variables
 def reset_game():
     global snake_position, snake_body, fruit_position, fruit_spawn, direction, change_to, score
@@ -49,6 +81,7 @@ def reset_game():
 def game_over():
     my_font = pygame.font.SysFont('times new roman', 50)
     game_over_surface = my_font.render('Your Score is : ' + str(score), True, red)
+    save_score(score)
     game_over_rect = game_over_surface.get_rect()
     game_over_rect.midtop = (window_x/2, window_y/4)
     game_window.blit(game_over_surface, game_over_rect)
@@ -59,26 +92,32 @@ def show_menu(action):
     while True:
         game_window.fill(black)
         menu_font = pygame.font.SysFont('times new roman', 50)
-
+        if action:
+            space = 2
+        else:
+            space = 3
         # Render menu options
         title_surface = menu_font.render('Snake Game', True, green)
         start_surface = menu_font.render('Press S to Start', True, white)
+        scores_surface = menu_font.render('Press T to see Scores', True, white)
         quit_surface = menu_font.render('Press Q to Quit', True, white)
 
         # Set positions for the menu options
-        title_rect = title_surface.get_rect(center=(window_x/2, window_y/4))
-        start_rect = start_surface.get_rect(center=(window_x/2, window_y/2))
-        quit_rect = quit_surface.get_rect(center=(window_x/2, window_y/2 + 50))
+        title_rect = title_surface.get_rect(center=(window_x/2, window_y/8))
+        start_rect = start_surface.get_rect(center=(window_x/2, window_y/space))
+        scores_rect = scores_surface.get_rect(center=(window_x/2, window_y/space + window_y/8))
+        quit_rect = quit_surface.get_rect(center=(window_x/2, window_y/space + 2 * window_y/8))
 
         # Blit the menu options onto the screen
         game_window.blit(title_surface, title_rect)
         game_window.blit(start_surface, start_rect)
+        game_window.blit(scores_surface, scores_rect)
         game_window.blit(quit_surface, quit_rect)
 
         # Adding a "Continue" section if the game is paused
         if action:
             ongoing_surface = menu_font.render('Press C to Continue', True, white)
-            ongoing_rect = ongoing_surface.get_rect(center=(window_x/2, window_y/3 + 30))
+            ongoing_rect = ongoing_surface.get_rect(center=(window_x/2, window_y/4))
             game_window.blit(ongoing_surface, ongoing_rect)
 
         pygame.display.flip()
@@ -170,7 +209,8 @@ while True:
             action = False
             
     # displaying score continuously
-    show_score(1, white, 'times new roman', 20)
+    show_score(1, white, 'times new roman', 20, window_x)
+    show_message(1, white, 'times new roman', 20)
 
     pygame.display.update()
 
